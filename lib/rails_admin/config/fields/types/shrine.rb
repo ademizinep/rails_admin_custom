@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'rails_admin/config/fields/types/file_upload'
 
 module RailsAdmin
@@ -12,16 +10,14 @@ module RailsAdmin
           register_instance_option :thumb_method do
             unless defined? @thumb_method
               @thumb_method = begin
-                next nil unless bindings[:object].respond_to?("#{name}_derivatives")
+                next nil unless value.is_a?(Hash)
 
-                derivatives = bindings[:object].public_send("#{name}_derivatives")
-
-                if derivatives.key?(:thumb)
+                if value.key?(:thumb)
                   :thumb
-                elsif derivatives.key?(:thumbnail)
+                elsif value.key?(:thumbnail)
                   :thumbnail
                 else
-                  derivatives.keys.first
+                  value.keys.first
                 end
               end
             end
@@ -33,21 +29,21 @@ module RailsAdmin
           end
 
           register_instance_option :cache_method do
-            name if bindings[:object].try("cached_#{name}_data")
+            name
           end
 
           register_instance_option :cache_value do
-            bindings[:object].try("cached_#{name}_data")
-          end
-
-          register_instance_option :link_name do
-            value.original_filename
+            bindings[:object].public_send("cached_#{name}_data") if bindings[:object].respond_to?("cached_#{name}_data")
           end
 
           def resource_url(thumb = nil)
             return nil unless value
 
-            thumb && bindings[:object].public_send(:"#{name}", thumb).try(:url) || value.url
+            if value.is_a?(Hash)
+              value[thumb || value.keys.first].url
+            else
+              value.url
+            end
           end
         end
       end

@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'rails_admin/config/fields/association'
 
 module RailsAdmin
@@ -10,10 +8,6 @@ module RailsAdmin
           # Register field type for the type loader
           RailsAdmin::Config::Fields::Types.register(self)
 
-          register_instance_option :filter_operators do
-            %w[_discard like not_like is starts_with ends_with] + (required? ? [] : %w[_separator _present _blank])
-          end
-
           register_instance_option :partial do
             nested_form ? :form_nested_one : :form_filtering_select
           end
@@ -23,20 +17,28 @@ module RailsAdmin
             (o = value) && o.send(associated_model_config.object_label_method)
           end
 
+          register_instance_option :inline_add do
+            true
+          end
+
+          register_instance_option :inline_edit do
+            true
+          end
+
+          def editable?
+            (nested_form || abstract_model.model.new.respond_to?("#{name}_id=")) && super
+          end
+
           def selected_id
-            value.try(:id).try(:to_s)
+            value.try :id
           end
 
           def method_name
-            nested_form ? "#{name}_attributes".to_sym : super
+            nested_form ? "#{name}_attributes".to_sym : "#{name}_id".to_sym
           end
 
           def multiple?
             false
-          end
-
-          def associated_prepopulate_params
-            {associated_model_config.abstract_model.param_key => {association.foreign_key => bindings[:object].try(:id)}}
           end
         end
       end

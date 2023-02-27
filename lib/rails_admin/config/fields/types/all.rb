@@ -1,12 +1,9 @@
-# frozen_string_literal: true
-
 require 'rails_admin/config/fields/types/action_text'
 require 'rails_admin/config/fields/types/active_record_enum'
 require 'rails_admin/config/fields/types/active_storage'
 require 'rails_admin/config/fields/types/belongs_to_association'
 require 'rails_admin/config/fields/types/boolean'
 require 'rails_admin/config/fields/types/bson_object_id'
-require 'rails_admin/config/fields/types/composite_keys_belongs_to_association'
 require 'rails_admin/config/fields/types/date'
 require 'rails_admin/config/fields/types/datetime'
 require 'rails_admin/config/fields/types/decimal'
@@ -41,4 +38,3 @@ require 'rails_admin/config/fields/types/froala'
 require 'rails_admin/config/fields/types/json'
 require 'rails_admin/config/fields/types/inet'
 require 'rails_admin/config/fields/types/uuid'
-require 'rails_admin/config/fields/types/citext'

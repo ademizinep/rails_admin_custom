@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module RailsAdmin
   module Extensions
     module CanCanCan
@@ -9,31 +7,16 @@ module RailsAdmin
           def current_ability
             # use _current_user instead of default current_user so it works with
             # whatever current user method is defined with RailsAdmin
-            @current_ability ||= ability_class.new(_current_user)
+            @current_ability ||= @ability.new(_current_user)
           end
-        end
-
-        include RailsAdmin::Config::Configurable
-
-        def self.setup
-          RailsAdmin::Extensions::ControllerExtension.include ControllerExtension
         end
 
         # See the +authorize_with+ config method for where the initialization happens.
-        def initialize(controller, ability = nil, &block)
+        def initialize(controller, ability = ::Ability)
           @controller = controller
-          ability_class { ability } if ability
-          instance_eval(&block) if block
-
-          adapter = self
-          ControllerExtension.define_method(:ability_class) do
-            adapter.ability_class
-          end
+          @controller.instance_variable_set '@ability', ability
+          @controller.extend ControllerExtension
           @controller.current_ability.authorize! :access, :rails_admin
-        end
-
-        register_instance_option :ability_class do
-          Ability
         end
 
         # This method is called in every controller action and should raise an exception
@@ -43,7 +26,6 @@ module RailsAdmin
         # instance if it is available.
         def authorize(action, abstract_model = nil, model_object = nil)
           return unless action
-
           action, subject = resolve_action_and_subject(action, abstract_model, model_object)
           @controller.current_ability.authorize!(action, subject)
         end
@@ -54,7 +36,6 @@ module RailsAdmin
         # return a boolean whereas +authorize+ will raise an exception when not authorized.
         def authorized?(action, abstract_model = nil, model_object = nil)
           return unless action
-
           action, subject = resolve_action_and_subject(action, abstract_model, model_object)
           @controller.current_ability.can?(action, subject)
         end
@@ -70,13 +51,13 @@ module RailsAdmin
         # records. It should return a hash of attributes which match what the user
         # is authorized to create.
         def attributes_for(action, abstract_model)
-          @controller.current_ability.attributes_for(action, abstract_model&.model)
+          @controller.current_ability.attributes_for(action, abstract_model && abstract_model.model)
         end
 
       private
 
         def resolve_action_and_subject(action, abstract_model, model_object)
-          subject = model_object || abstract_model&.model
+          subject = model_object || abstract_model && abstract_model.model
           if subject
             [action, subject]
           else

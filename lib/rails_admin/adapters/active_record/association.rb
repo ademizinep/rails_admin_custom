@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module RailsAdmin
   module Adapters
     module ActiveRecord
@@ -23,14 +21,6 @@ module RailsAdmin
           association.macro
         end
 
-        def field_type
-          if polymorphic?
-            :polymorphic_association
-          else
-            :"#{association.macro}_association"
-          end
-        end
-
         def klass
           if options[:polymorphic]
             polymorphic_parents(:active_record, model.name.to_s, name) || []
@@ -40,14 +30,7 @@ module RailsAdmin
         end
 
         def primary_key
-          return nil if polymorphic?
-
-          case type
-          when :has_one
-            association.klass.primary_key
-          else
-            association.association_primary_key
-          end.try(:to_sym)
+          (options[:primary_key] || association.klass.primary_key).try(:to_sym) unless polymorphic?
         end
 
         def foreign_key
@@ -56,7 +39,6 @@ module RailsAdmin
 
         def foreign_key_nullable?
           return true if foreign_key.nil? || type != :has_many
-
           (column = klass.columns_hash[foreign_key.to_s]).nil? || column.null
         end
 
@@ -66,17 +48,6 @@ module RailsAdmin
 
         def foreign_inverse_of
           nil
-        end
-
-        def key_accessor
-          case type
-          when :has_many, :has_and_belongs_to_many
-            "#{name.to_s.singularize}_ids".to_sym
-          when :has_one
-            "#{name}_id".to_sym
-          else
-            foreign_key
-          end
         end
 
         def as
@@ -92,7 +63,7 @@ module RailsAdmin
         end
 
         def read_only?
-          (klass.all.instance_exec(&scope).readonly_value if scope.is_a?(Proc) && scope.arity == 0) ||
+          (klass.all.instance_eval(&scope).readonly_value if scope.is_a? Proc) ||
             association.nested? ||
             false
         end

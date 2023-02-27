@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module RailsAdmin
   module Config
     # A module for all configurables.
@@ -11,7 +9,7 @@ module RailsAdmin
 
       def has_option?(name) # rubocop:disable Naming/PredicateName
         options = self.class.instance_variable_get('@config_options')
-        options&.key?(name)
+        options && options.key?(name)
       end
 
       # Register an instance option for this object only
@@ -89,7 +87,7 @@ module RailsAdmin
             elsif block_given?
               yield
             else
-              raise "The #{option_name} configuration option is removed without replacement."
+              raise("The #{option_name} configuration option is removed without replacement.")
             end
           end
         end

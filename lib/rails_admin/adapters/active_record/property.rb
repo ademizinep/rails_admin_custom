@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module RailsAdmin
   module Adapters
     module ActiveRecord
@@ -44,13 +42,13 @@ module RailsAdmin
         end
 
         def read_only?
-          model.readonly_attributes.include? property.name.to_s
+          false
         end
 
       private
 
         def serialized?
-          model.type_for_attribute(property.name).instance_of?(::ActiveRecord::Type::Serialized)
+          model.type_for_attribute(property.name).class == ::ActiveRecord::Type::Serialized
         end
       end
     end

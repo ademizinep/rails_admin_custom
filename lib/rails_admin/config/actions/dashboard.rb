@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module RailsAdmin
   module Config
     module Actions
@@ -20,21 +18,20 @@ module RailsAdmin
 
         register_instance_option :controller do
           proc do
-            @history = @auditing_adapter&.latest(@action.auditing_versions_limit) if @action.history?
+            @history = @auditing_adapter && @auditing_adapter.latest(@action.auditing_versions_limit) || []
             if @action.statistics?
-              model_configs = RailsAdmin::Config.visible_models(controller: self)
+              @abstract_models = RailsAdmin::Config.visible_models(controller: self).collect(&:abstract_model)
 
-              @abstract_models = model_configs.map(&:abstract_model)
               @most_recent_created = {}
               @count = {}
               @max = 0
-              model_configs.each do |config|
-                scope = @authorization_adapter&.query(:index, config.abstract_model)
-                current_count = config.abstract_model.count({}, scope)
+              @abstract_models.each do |t|
+                scope = @authorization_adapter && @authorization_adapter.query(:index, t)
+                current_count = t.count({}, scope)
                 @max = current_count > @max ? current_count : @max
-                name = config.abstract_model.model.name
-                @count[name] = current_count
-                @most_recent_created[name] = config.last_created_at
+                @count[t.model.name] = current_count
+                next unless t.properties.detect { |c| c.name == :created_at }
+                @most_recent_created[t.model.name] = t.model.last.try(:created_at)
               end
             end
             render @action.template_name, status: @status_code || :ok
@@ -46,14 +43,10 @@ module RailsAdmin
         end
 
         register_instance_option :link_icon do
-          'fas fa-home'
+          'icon-home'
         end
 
         register_instance_option :statistics? do
-          true
-        end
-
-        register_instance_option :history? do
           true
         end
       end

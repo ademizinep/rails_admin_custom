@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'rails_admin/config/fields/association'
 
 module RailsAdmin
@@ -8,10 +6,6 @@ module RailsAdmin
       module Types
         class BelongsToAssociation < RailsAdmin::Config::Fields::Association
           RailsAdmin::Config::Fields::Types.register(self)
-
-          register_instance_option :filter_operators do
-            %w[_discard like not_like is starts_with ends_with] + (required? ? [] : %w[_separator _present _blank])
-          end
 
           register_instance_option :formatted_value do
             (o = value) && o.send(associated_model_config.object_label_method)
@@ -29,16 +23,28 @@ module RailsAdmin
             nested_form ? :form_nested_one : :form_filtering_select
           end
 
-          register_instance_option :eager_load do
+          register_instance_option :inline_add do
             true
           end
 
+          register_instance_option :inline_edit do
+            true
+          end
+
+          register_instance_option :eager_load? do
+            true
+          end
+
+          def associated_primary_key
+            @associated_primary_key ||= association.primary_key
+          end
+
           def selected_id
-            bindings[:object].safe_send(association.key_accessor)
+            bindings[:object].send(foreign_key)
           end
 
           def method_name
-            nested_form ? "#{name}_attributes".to_sym : super
+            nested_form ? "#{name}_attributes".to_sym : association.foreign_key
           end
 
           def multiple?

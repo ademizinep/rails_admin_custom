@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 require 'rails_admin/config/fields/types/file_upload'
 
 module RailsAdmin
@@ -10,7 +8,7 @@ module RailsAdmin
           RailsAdmin::Config::Fields::Types.register(self)
 
           register_instance_option :thumb_method do
-            {resize_to_limit: [100, 100]}
+            {resize: '100x100>'}
           end
 
           register_instance_option :delete_method do
@@ -19,30 +17,12 @@ module RailsAdmin
 
           register_instance_option :image? do
             if value
-              mime_type = Mime::Type.lookup_by_extension(value.filename.extension_without_delimiter)
-              mime_type.to_s.match?(/^image/)
+              value.filename.to_s.split('.').last =~ /jpg|jpeg|png|gif|svg/i
             end
-          end
-
-          register_instance_option :eager_load do
-            {"#{name}_attachment": :blob}
-          end
-
-          register_instance_option :direct? do
-            false
-          end
-
-          register_instance_option :html_attributes do
-            {
-              required: required? && !value.present?,
-            }.merge(
-              direct? && {data: {direct_upload_url: bindings[:view].main_app.rails_direct_uploads_url}} || {},
-            )
           end
 
           def resource_url(thumb = false)
             return nil unless value
-
             if thumb && value.variable?
               thumb = thumb_method if thumb == true
               variant = value.variant(thumb)
@@ -56,7 +36,7 @@ module RailsAdmin
 
           def value
             attachment = super
-            attachment if attachment&.attached?
+            attachment if attachment && attachment.attached?
           end
         end
       end
